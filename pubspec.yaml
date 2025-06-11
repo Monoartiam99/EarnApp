@@ -13,6 +13,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_auth: ^4.17.1
   firebase_core: ^2.30.1
+  scratcher: ^2.0.0
+  flutter_fortune_wheel: ^1.2.0
+  shared_preferences: ^2.2.2
+
+
+
+
 
 dev_dependencies:
   flutter_test:
