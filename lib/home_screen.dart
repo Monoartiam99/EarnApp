@@ -57,7 +57,7 @@ class HomeScreen extends StatelessWidget {
           padding: EdgeInsets.all(16),
           child: Column(
             children: [
-              _buildUserInfo(),
+              _buildUserInfo(context),
               SizedBox(height: 20),
               _buildEarningsBoxes(context),
             ],
@@ -67,7 +67,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserInfo() {
+  Widget _buildUserInfo(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16),
@@ -81,10 +81,12 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       child: Row(
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween, // <-- This is the key change
         children: [
           Flexible(
             child: Text(
-              "Hi $userName 👋", // Only "Hi Ujjwal"
+              "Hi $userName 👋",
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 18,
@@ -93,15 +95,50 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 10),
-          Icon(Icons.monetization_on, color: Colors.yellowAccent),
-          SizedBox(width: 4),
-          Text(
-            " $userCoins Coins",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder:
+                    (ctx) => AlertDialog(
+                      title: Row(
+                        children: [
+                          Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.blueAccent,
+                          ),
+                          SizedBox(width: 8),
+                          Text("Wallet Balance"),
+                        ],
+                      ),
+                      content: Text(
+                        "₹${(userCoins / 100).toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text("Close"),
+                        ),
+                      ],
+                    ),
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.account_balance_wallet,
+                color: Colors.yellowAccent,
+                size: 28,
+              ),
             ),
           ),
         ],

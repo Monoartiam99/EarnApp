@@ -76,38 +76,47 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
                   duration: const Duration(milliseconds: 300),
                   child: _revealed
                       ? Column(
-                    key: const ValueKey('revealed'),
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [Colors.amber.shade600, Colors.deepOrangeAccent],
-                        ).createShader(bounds),
-                        child: Text(
-                          "🎉 $_reward Coins!",
-                          style: const TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white, // hidden under shader
+                          key: const ValueKey('revealed'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _reward == 50
+                                ? Text(
+                                    "🎉 $_reward Coins!",
+                                    style: const TextStyle(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue, // Blue for 50 coins
+                                    ),
+                                  )
+                                : ShaderMask(
+                                    shaderCallback: (bounds) => LinearGradient(
+                                      colors: [Colors.amber.shade600, Colors.deepOrangeAccent],
+                                    ).createShader(bounds),
+                                    child: Text(
+                                      "🎉 $_reward Coins!",
+                                      style: const TextStyle(
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white, // hidden under shader
+                                      ),
+                                    ),
+                                  ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              "You crushed it! 🚀",
+                              style: TextStyle(fontSize: 16, color: Colors.black54),
+                            ),
+                          ],
+                        )
+                      : const Text(
+                          "🎯 Scratch to Reveal!",
+                          key: ValueKey('notRevealed'),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "You crushed it! 🚀",
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      ),
-                    ],
-                  )
-                      : const Text(
-                    "🎯 Scratch to Reveal!",
-                    key: ValueKey('notRevealed'),
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
                 ),
               ),
             ),
