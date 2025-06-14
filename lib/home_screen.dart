@@ -192,13 +192,13 @@ class HomeScreen extends StatelessWidget {
             Colors.blue,
             null,
           ),
-          _buildEarningBox(
-            context,
-            "Leaderboard",
-            Icons.leaderboard,
-            Colors.blue,
-            null,
-          ),
+          // _buildEarningBox(
+          //   context,
+          //   "Leaderboard",
+          //   Icons.leaderboard,
+          //   Colors.blue,
+          //   null,
+          // ),
         ],
       ),
     );
