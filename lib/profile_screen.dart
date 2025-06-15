@@ -1,101 +1,170 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Add this import
+import 'auth_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  // Replace these with actual user data from Firebase or your backend
-  final String userName = "Ujjwal Tiwari";
-  final String email = "ujjwal@example.com";
-  final String phone = "+91 9876543210";
-  final String profilePicUrl = ""; // Add a URL or leave empty for placeholder
-
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  void _logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut(); // Firebase logout
-    Navigator.of(context).pushReplacementNamed('/login'); // Navigate to login
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  String name = '';
+  String email = '';
+  String phone = '';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+          setState(() {
+            name = data['name'] ?? 'No Name';
+            email = data['email'] ?? 'No Email';
+            phone = data['phone'] ?? 'No Phone';
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            name = 'No data found';
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print("Error: $e");
+      setState(() {
+        name = 'Error loading data';
+        isLoading = false;
+      });
+    }
+  }
+
+  void logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const AuthScreen()),
+          (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Profile"),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: 'Back',
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () => _logout(context),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Profile Picture
-            Center(
-              child: CircleAvatar(
-                radius: 50,
-                backgroundImage: profilePicUrl.isNotEmpty
-                    ? NetworkImage(profilePicUrl)
-                    : null,
-                child: profilePicUrl.isEmpty
-                    ? Icon(Icons.person, size: 60)
-                    : null,
+      backgroundColor: Colors.blue[50],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 40),
+              Center(
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.blue[100],
+                  child: const Icon(Icons.person, size: 60, color: Colors.blue),
+                ),
               ),
-            ),
-            SizedBox(height: 24),
-            // Name
-            Text(
-              userName,
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 16),
-            // Email Box
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: Icon(Icons.email, color: Colors.blueAccent),
-                title: Text(email),
-              ),
-            ),
-            SizedBox(height: 12),
-            // Phone Box
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: Icon(Icons.phone, color: Colors.green),
-                title: Text(phone),
-              ),
-            ),
-            Spacer(),
-            // Logout Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(Icons.logout),
-                label: Text("Logout"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              const SizedBox(height: 20),
+              Center(
+                child: Text(
+                  name.isNotEmpty ? name : 'Loading...',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
-                onPressed: () => _logout(context),
+              ),
+              const SizedBox(height: 30),
+
+              isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  profileItem("Email", email),
+                  profileItem("Phone", phone),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: logout,
+                  icon: const Icon(Icons.logout),
+                  label: const Text("Logout"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget profileItem(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$title:",
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blueAccent.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
