@@ -1,4 +1,6 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:scratcher/scratcher.dart';
 
@@ -28,6 +30,16 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     _generateReward();
   }
 
+  Future<void> _updateUserCoins() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentReference userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      await userDoc.update({
+        'coins': FieldValue.increment(_reward),
+      });
+    }
+  }
+
   void _resetCard() {
     setState(() {
       _revealed = false;
@@ -55,7 +67,10 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
               brushSize: 40,
               threshold: 50,
               color: Colors.grey.shade400,
-              onThreshold: () => setState(() => _revealed = true),
+              onThreshold: () {
+                setState(() => _revealed = true);
+                _updateUserCoins(); // Update Firestore when revealed
+              },
               child: Container(
                 height: 240,
                 width: 330,
@@ -76,47 +91,33 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
                   duration: const Duration(milliseconds: 300),
                   child: _revealed
                       ? Column(
-                          key: const ValueKey('revealed'),
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _reward == 50
-                                ? Text(
-                                    "🎉 $_reward Coins!",
-                                    style: const TextStyle(
-                                      fontSize: 30,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue, // Blue for 50 coins
-                                    ),
-                                  )
-                                : ShaderMask(
-                                    shaderCallback: (bounds) => LinearGradient(
-                                      colors: [Colors.amber.shade600, Colors.deepOrangeAccent],
-                                    ).createShader(bounds),
-                                    child: Text(
-                                      "🎉 $_reward Coins!",
-                                      style: const TextStyle(
-                                        fontSize: 30,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white, // hidden under shader
-                                      ),
-                                    ),
-                                  ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              "You crushed it! 🚀",
-                              style: TextStyle(fontSize: 16, color: Colors.black54),
-                            ),
-                          ],
-                        )
-                      : const Text(
-                          "🎯 Scratch to Reveal!",
-                          key: ValueKey('notRevealed'),
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
+                    key: const ValueKey('revealed'),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "🎉 $_reward Coins!",
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: _reward == 50 ? Colors.blue : Colors.orange,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "You crushed it! 🚀",
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                    ],
+                  )
+                      : const Text(
+                    "🎯 Scratch to Reveal!",
+                    key: ValueKey('notRevealed'),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
                 ),
               ),
             ),

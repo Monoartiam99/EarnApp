@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SpinWheelScreen extends StatefulWidget {
   const SpinWheelScreen({super.key});
@@ -14,7 +15,7 @@ class SpinWheelScreen extends StatefulWidget {
 class _SpinWheelScreenState extends State<SpinWheelScreen> {
   final List<int> coinOptions = [10, 20, 30, 40, 50];
   final StreamController<int> _controller = StreamController<int>();
-  int _totalCoins = 0;
+  int userCoins = 0;
   int? _reward;
   int? _selectedIndex;
   bool _isSpinning = false;
@@ -22,20 +23,30 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
   @override
   void initState() {
     super.initState();
-    _loadTotalCoins();
+    _fetchUserCoins();
   }
 
-  Future<void> _loadTotalCoins() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _totalCoins = prefs.getInt('totalCoins') ?? 0;
-    });
+  void _fetchUserCoins() {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots().listen((doc) {
+        if (doc.exists) {
+          setState(() {
+            userCoins = doc['coins'] ?? 0;
+          });
+        }
+      });
+    }
   }
 
-  Future<void> _updateTotalCoins() async {
-    final prefs = await SharedPreferences.getInstance();
-    _totalCoins += _reward ?? 0;
-    await prefs.setInt('totalCoins', _totalCoins);
+  Future<void> _updateUserCoins() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null && _reward != null) {
+      DocumentReference userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      await userDoc.update({
+        'coins': FieldValue.increment(_reward!),
+      });
+    }
   }
 
   void _spinWheel() {
@@ -81,7 +92,7 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Total Coins: $_totalCoins",
+                    "Wallet Balance: ${(userCoins)}",
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -112,37 +123,29 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
                       child: FortuneWheel(
                         selected: _controller.stream,
                         animateFirst: false,
-                        items:
-                            coinOptions
-                                .map(
-                                  (value) => FortuneItem(
-                                    child: Text(
-                                      "$value Coins",
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    style: FortuneItemStyle(
-                                      color:
-                                          Colors
-                                              .accents[Random().nextInt(
-                                                Colors.accents.length,
-                                              )]
-                                              .shade400,
-                                      borderColor: Colors.white,
-                                      borderWidth: 2,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
+                        items: coinOptions.map(
+                              (value) => FortuneItem(
+                            child: Text(
+                              "$value Coins",
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: FortuneItemStyle(
+                              color: Colors.accents[Random().nextInt(Colors.accents.length)].shade400,
+                              borderColor: Colors.white,
+                              borderWidth: 2,
+                            ),
+                          ),
+                        ).toList(),
                         onAnimationEnd: () {
                           if (_selectedIndex != null) {
                             setState(() {
                               _reward = coinOptions[_selectedIndex!];
                               _isSpinning = false;
                             });
-                            _updateTotalCoins();
+                            _updateUserCoins();
                           }
                         },
                         indicators: const [
@@ -182,11 +185,11 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
                       opacity: 1.0,
                       duration: const Duration(milliseconds: 500),
                       child: Text(
-                        "🎉 You won $_reward Coins!",
+                        "🎉 Congratulations! You won $_reward Coins!",
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: Colors.yellowAccent,
+                          color: Colors.greenAccent,
                           shadows: [
                             Shadow(blurRadius: 10, color: Colors.black87),
                             Shadow(blurRadius: 15, color: Colors.orangeAccent),
