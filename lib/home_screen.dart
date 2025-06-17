@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
       FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots().listen((doc) {
         if (doc.exists) {
           setState(() {
-            userName = doc['name'] ?? "User";
+            userName = doc['name'] ?? "name";
             userCoins = doc['coins'] ?? 0;
           });
         }
