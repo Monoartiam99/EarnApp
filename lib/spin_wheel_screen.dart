@@ -9,7 +9,7 @@ class SpinWheelScreen extends StatefulWidget {
   const SpinWheelScreen({super.key});
 
   @override
-  State<SpinWheelScreen> createState() => _SpinWheelScreenState();
+  _SpinWheelScreenState createState() => _SpinWheelScreenState();
 }
 
 class _SpinWheelScreenState extends State<SpinWheelScreen> {
@@ -68,17 +68,13 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color deepBlue = Color(0xFF0D47A1);
-    const Color gradientStart = Color(0xFF1E3A8A);
-    const Color gradientEnd = Color(0xFF2563EB);
-
     return Scaffold(
       backgroundColor: Colors.blueGrey.shade50,
       appBar: AppBar(
-        backgroundColor: deepBlue,
+        backgroundColor: Colors.blueAccent,
         title: const Text(
-          "Spin & Win",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          "🎡 Spin & Win",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         centerTitle: true,
       ),
@@ -91,116 +87,131 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "Wallet Balance: ${(userCoins)}",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
-                    ),
-                  ),
+                  _buildWalletBalance(),
                   const SizedBox(height: 20),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [gradientStart, gradientEnd],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: SizedBox(
-                      height: 320,
-                      width: 320,
-                      child: FortuneWheel(
-                        selected: _controller.stream,
-                        animateFirst: false,
-                        items: coinOptions.map(
-                              (value) => FortuneItem(
-                            child: Text(
-                              "$value Coins",
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: FortuneItemStyle(
-                              color: Colors.accents[Random().nextInt(Colors.accents.length)].shade400,
-                              borderColor: Colors.white,
-                              borderWidth: 2,
-                            ),
-                          ),
-                        ).toList(),
-                        onAnimationEnd: () {
-                          if (_selectedIndex != null) {
-                            setState(() {
-                              _reward = coinOptions[_selectedIndex!];
-                              _isSpinning = false;
-                            });
-                            _updateUserCoins();
-                          }
-                        },
-                        indicators: const [
-                          FortuneIndicator(
-                            alignment: Alignment.topCenter,
-                            child: TriangleIndicator(color: Colors.red),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildWheelContainer(),
                   const SizedBox(height: 40),
-                  ElevatedButton.icon(
-                    onPressed: _spinWheel,
-                    icon: const Icon(Icons.casino),
-                    label: const Text("SPIN NOW"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 14,
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                    ),
-                  ),
+                  _buildSpinButton(),
                   const SizedBox(height: 30),
-                  if (_reward != null)
-                    AnimatedOpacity(
-                      opacity: 1.0,
-                      duration: const Duration(milliseconds: 500),
-                      child: Text(
-                        "🎉 Congratulations! You won $_reward Coins!",
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.greenAccent,
-                          shadows: [
-                            Shadow(blurRadius: 10, color: Colors.black87),
-                            Shadow(blurRadius: 15, color: Colors.orangeAccent),
-                          ],
-                        ),
-                      ),
-                    ),
+                  if (_reward != null) _buildRewardMessage(),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWalletBalance() {
+    return Text(
+      "Wallet Balance: $userCoins Coins",
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.bold,
+        color: Colors.orange,
+      ),
+    );
+  }
+
+  Widget _buildWheelContainer() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Colors.blueAccent, Colors.lightBlue],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: SizedBox(
+        height: 320,
+        width: 320,
+        child: FortuneWheel(
+          selected: _controller.stream,
+          animateFirst: false,
+          items: coinOptions.map(
+                (value) => FortuneItem(
+              child: Text(
+                "$value Coins",
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              style: FortuneItemStyle(
+                color: Colors.accents[Random().nextInt(Colors.accents.length)].shade400,
+                borderColor: Colors.white,
+                borderWidth: 2,
+              ),
+            ),
+          ).toList(),
+          onAnimationEnd: () {
+            if (_selectedIndex != null) {
+              setState(() {
+                _reward = coinOptions[_selectedIndex!];
+                _isSpinning = false;
+              });
+              _updateUserCoins();
+            }
+          },
+          indicators: const [
+            FortuneIndicator(
+              alignment: Alignment.topCenter,
+              child: TriangleIndicator(color: Colors.red),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpinButton() {
+    return ElevatedButton.icon(
+      onPressed: _spinWheel,
+      icon: const Icon(Icons.sports_esports, size: 28), // Updated spin icon for better representation
+      label: const Text("SPIN NOW"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent.shade700,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 32,
+          vertical: 14,
+        ),
+        textStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 6,
+      ),
+    );
+  }
+
+  Widget _buildRewardMessage() {
+    return AnimatedOpacity(
+      opacity: 1.0,
+      duration: const Duration(milliseconds: 500),
+      child: Text(
+        "🎉 You won $_reward Coins!",
+        style: const TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.bold,
+          color: Colors.redAccent,
+          shadows: [
+            Shadow(blurRadius: 10, color: Colors.black87),
+            Shadow(blurRadius: 15, color: Colors.orangeAccent),
+          ],
         ),
       ),
     );

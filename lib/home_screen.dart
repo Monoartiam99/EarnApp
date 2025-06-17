@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
       FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots().listen((doc) {
         if (doc.exists) {
           setState(() {
-            userName = doc['name'] ?? "name";
+            userName = doc['name'] ?? "User";
             userCoins = doc['coins'] ?? 0;
           });
         }
@@ -65,13 +65,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
-        elevation: 0,
+        elevation: 4,
         title: Text(
           "Kamao Money 💰",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
@@ -101,10 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.blueAccent, Colors.lightBlueAccent]),
+        gradient: LinearGradient(colors: [Colors.blueAccent.shade700, Colors.lightBlueAccent]),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.blue.withOpacity(0.2), blurRadius: 10),
+          BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 12, offset: Offset(0, 6)),
         ],
       ),
       child: Row(
@@ -114,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               "Hi $userName 👋",
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
           GestureDetector(
@@ -130,8 +130,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   content: Text(
-                    "${(userCoins)} Coins",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green[700]),
+                    "$userCoins Coins",
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.green.shade700),
                   ),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Close")),
@@ -140,12 +140,12 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.account_balance_wallet, color: Colors.yellowAccent, size: 28),
+              child: Icon(Icons.account_balance_wallet, color: Colors.yellowAccent, size: 30),
             ),
           ),
         ],
@@ -155,20 +155,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEarningsBoxes(BuildContext context) {
     return SizedBox(
-      height: 600, // Adjust height as needed for your content/screen
+      height: 600,
       child: GridView.count(
         physics: NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         crossAxisCount: 2,
-        mainAxisSpacing: 15,
-        crossAxisSpacing: 15,
-        childAspectRatio: 1.2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 1.1,
         children: [
-          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.blue, ScratchCardScreen()),
-          _buildEarningBox(context, "Spin & Win", Icons.casino, Colors.blue, SpinWheelScreen()),
-          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.blue, null),
-          _buildEarningBox(context, "Promo Code", Icons.discount, Colors.blue, null),
-          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.blue, null),
+          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.blueAccent, ScratchCardScreen()),
+          _buildEarningBox(context, "Spin & Win", Icons.rotate_right, Colors.blueAccent, SpinWheelScreen()),
+          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.blueAccent, null),
+          _buildEarningBox(context, "Promo Code", Icons.discount, Colors.blueAccent, null),
+          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.blueAccent, null),
         ],
       ),
     );
@@ -182,14 +182,14 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       child: Card(
-        elevation: 8,
+        elevation: 10,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 45, color: color),
-            SizedBox(height: 9),
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Icon(icon, size: 50, color: color),
+            SizedBox(height: 12),
+            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
