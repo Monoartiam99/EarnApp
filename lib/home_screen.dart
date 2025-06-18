@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'auth_screen.dart';
 import 'scratch_card_screen.dart';
 import 'spin_wheel_screen.dart';
+import 'daily_bonus.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,9 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
+      backgroundColor: Colors.deepPurple.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.deepPurpleAccent,
         elevation: 4,
         title: Text(
           "Kamao Money 💰",
@@ -101,10 +102,10 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.blueAccent.shade700, Colors.lightBlueAccent]),
+        gradient: LinearGradient(colors: [Colors.purpleAccent.shade700, Colors.deepPurple.shade400]),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 12, offset: Offset(0, 6)),
+          BoxShadow(color: Colors.deepPurpleAccent.withOpacity(0.3), blurRadius: 12, offset: Offset(0, 6)),
         ],
       ),
       child: Row(
@@ -124,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (ctx) => AlertDialog(
                   title: Row(
                     children: [
-                      Icon(Icons.account_balance_wallet, color: Colors.blueAccent),
+                      Icon(Icons.account_balance_wallet, color: Colors.deepPurpleAccent),
                       SizedBox(width: 8),
                       Text("Wallet Balance"),
                     ],
@@ -164,11 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisSpacing: 16,
         childAspectRatio: 1.1,
         children: [
-          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.blueAccent, ScratchCardScreen()),
-          _buildEarningBox(context, "Spin & Win", Icons.rotate_right, Colors.blueAccent, SpinWheelScreen()),
-          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.blueAccent, null),
-          _buildEarningBox(context, "Promo Code", Icons.discount, Colors.blueAccent, null),
-          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.blueAccent, null),
+          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.deepPurple, ScratchCardScreen()),
+          _buildEarningBox(context, "Spin & Win", Icons.rotate_right, Colors.deepPurple, SpinWheelScreen()),
+          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.deepPurple, null),
+          _buildEarningBox(context, "Promo Code", Icons.discount, Colors.deepPurple, null),
+          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.deepPurple, DailyBonusScreen()),
         ],
       ),
     );

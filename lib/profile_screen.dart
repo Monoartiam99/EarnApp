@@ -47,7 +47,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } catch (e) {
-      print("Error: $e");
       setState(() {
         name = 'Error loading data';
         isLoading = false;
@@ -65,58 +64,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color primary = const Color(0xFF7B1FA2); // Deep Violet
+    final Color lightViolet = const Color(0xFFE1BEE7);
+
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: lightViolet.withOpacity(0.15),
+      appBar: AppBar(
+        backgroundColor: primary,
+        elevation: 0,
+        title: const Text(
+          "My Profile",
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 40),
-              Center(
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.blue[100],
-                  child: const Icon(Icons.person, size: 60, color: Colors.blue),
-                ),
+              const SizedBox(height: 30),
+              CircleAvatar(
+                radius: 55,
+                backgroundColor: lightViolet,
+                child: const Icon(Icons.person, size: 60, color: Colors.deepPurple),
               ),
-              const SizedBox(height: 20),
-              Center(
-                child: Text(
-                  name.isNotEmpty ? name : 'Loading...',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+              const SizedBox(height: 16),
+              Text(
+                name.isNotEmpty ? name : 'Loading...',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 30),
-
               isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  profileItem("Email", email),
-                  profileItem("Phone", phone),
+                  profileItem("Email", email, primary),
+                  profileItem("Phone", phone, primary),
                 ],
               ),
-
-              const SizedBox(height: 30),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: logout,
-                  icon: const Icon(Icons.logout),
-                  label: const Text("Logout"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                  ),
+              const SizedBox(height: 40),
+              ElevatedButton.icon(
+                onPressed: logout,
+                icon: const Icon(Icons.logout),
+                label: const Text("Logout"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ],
@@ -126,45 +127,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget profileItem(String title, String value) {
+  Widget profileItem(String title, String value, Color borderColor) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "$title:",
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black54,
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: borderColor.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: borderColor.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.blueAccent.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black87,
+          ],
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "$title:",
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: borderColor.withOpacity(0.8),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+          ],
+        ),
       ),
     );
   }
