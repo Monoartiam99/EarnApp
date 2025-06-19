@@ -17,6 +17,7 @@ dependencies:
   scratcher: ^2.0.0
   flutter_fortune_wheel: ^1.2.0
   shared_preferences: ^2.2.2
+  google_mobile_ads: ^5.0.0
 
 
 

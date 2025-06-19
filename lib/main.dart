@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import 'home_screen.dart';
 import 'auth_screen.dart';
 import 'earn_screen.dart';
@@ -10,6 +12,7 @@ import 'withdraw_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  MobileAds.instance.initialize();
 
   runApp(const MyApp());
 }
@@ -20,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // <-- Add this line
+      debugShowCheckedModeBanner: false,
       title: 'Kamao Money',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -29,9 +32,9 @@ class MyApp extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return MainScreen(); // Redirect if user is logged in
+            return const MainScreen();
           }
-          return AuthScreen(); // Show authentication screen if not logged in
+          return const AuthScreen();
         },
       ),
     );
@@ -47,7 +50,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-  final List<Widget> _screens = [
+
+  final List<Widget> _screens = const [
     HomeScreen(),
     EarnScreen(),
     ProfileScreen(),
@@ -67,7 +71,7 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.money), label: 'Earn'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),

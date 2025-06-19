@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import 'auth_screen.dart';
 import 'scratch_card_screen.dart';
 import 'spin_wheel_screen.dart';
 import 'daily_bonus.dart';
+import 'watch_ads_screen.dart'; // ✅ Added this import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,22 +43,22 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text("Confirm Logout"),
-        content: Text("Are you sure you want to log out?"),
+        title: const Text("Confirm Logout"),
+        content: const Text("Are you sure you want to log out?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
           ),
           TextButton(
             onPressed: () {
               FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => AuthScreen()),
+                MaterialPageRoute(builder: (context) => const AuthScreen()),
               );
             },
-            child: Text("Logout", style: TextStyle(color: Colors.red)),
+            child: const Text("Logout", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -70,25 +72,25 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurpleAccent,
         elevation: 4,
-        title: Text(
+        title: const Text(
           "Kamao Money 💰",
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: const Icon(Icons.logout),
             onPressed: () => _logout(context),
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               _buildUserInfo(context),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               _buildEarningsBoxes(context),
             ],
           ),
@@ -100,12 +102,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildUserInfo(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: [Colors.purpleAccent.shade700, Colors.deepPurple.shade400]),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
-          BoxShadow(color: Colors.deepPurpleAccent.withOpacity(0.3), blurRadius: 12, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Colors.deepPurpleAccent.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
       child: Row(
@@ -115,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               "Hi $userName 👋",
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
           GestureDetector(
@@ -124,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 context: context,
                 builder: (ctx) => AlertDialog(
                   title: Row(
-                    children: [
+                    children: const [
                       Icon(Icons.account_balance_wallet, color: Colors.deepPurpleAccent),
                       SizedBox(width: 8),
                       Text("Wallet Balance"),
@@ -135,18 +141,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.green.shade700),
                   ),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Close")),
+                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close")),
                   ],
                 ),
               );
             },
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.account_balance_wallet, color: Colors.yellowAccent, size: 30),
+              child: const Icon(Icons.account_balance_wallet, color: Colors.yellowAccent, size: 30),
             ),
           ),
         ],
@@ -158,18 +164,18 @@ class _HomeScreenState extends State<HomeScreen> {
     return SizedBox(
       height: 600,
       child: GridView.count(
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         crossAxisCount: 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
         childAspectRatio: 1.1,
         children: [
-          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.deepPurple, ScratchCardScreen()),
-          _buildEarningBox(context, "Spin & Win", Icons.rotate_right, Colors.deepPurple, SpinWheelScreen()),
-          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.deepPurple, null),
+          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.deepPurple, const ScratchCardScreen()),
+          _buildEarningBox(context, "Spin & Win", Icons.rotate_right, Colors.deepPurple, const SpinWheelScreen()),
+          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.deepPurple, const WatchAdsScreen()), // ✅ Updated
           _buildEarningBox(context, "Promo Code", Icons.discount, Colors.deepPurple, null),
-          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.deepPurple, DailyBonusScreen()),
+          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.deepPurple, const DailyBonusScreen()),
         ],
       ),
     );
@@ -189,22 +195,11 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 50, color: color),
-            SizedBox(height: 12),
-            Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
     );
-  }
-
-  static String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return "Good Morning";
-    } else if (hour < 18) {
-      return "Good Afternoon";
-    } else {
-      return "Good Evening";
-    }
   }
 }
