@@ -67,9 +67,38 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
               brushSize: 40,
               threshold: 50,
               color: Colors.grey.shade400,
-              onThreshold: () {
+              onThreshold: () async {
                 setState(() => _revealed = true);
-                _updateUserCoins(); // Update Firestore when revealed
+                await _updateUserCoins(); // Update Firestore when revealed
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text("Congratulations!"),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.monetization_on, color: Colors.amber, size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          "+$_reward Coins",
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text("Coins have been added to your wallet!"),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text("OK"),
+                      ),
+                    ],
+                  ),
+                );
               },
               child: Container(
                 height: 240,

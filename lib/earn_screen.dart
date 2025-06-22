@@ -14,7 +14,8 @@ class EarnScreen extends StatefulWidget {
 
 class _EarnScreenState extends State<EarnScreen> {
   String? referralCode;
-  final TextEditingController _referralInputController = TextEditingController();
+  final TextEditingController _referralInputController =
+      TextEditingController();
   int walletCoins = 0;
 
   @override
@@ -54,7 +55,9 @@ class _EarnScreenState extends State<EarnScreen> {
   String _generateReferralCode() {
     final random = Random();
     final numbers = (100 + random.nextInt(900)).toString(); // 3 random digits
-    final letter = String.fromCharCode(65 + random.nextInt(26)); // 1 random capital letter
+    final letter = String.fromCharCode(
+      65 + random.nextInt(26),
+    ); // 1 random capital letter
     return "KAMAO$numbers$letter";
   }
 
@@ -73,7 +76,10 @@ class _EarnScreenState extends State<EarnScreen> {
       SnackBar(
         content: Text("Referral code copied to clipboard!"),
         behavior: SnackBarBehavior.floating, // This makes it float
-        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16), // Optional: adds margin
+        margin: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 16,
+        ), // Optional: adds margin
       ),
     );
   }
@@ -155,32 +161,37 @@ class _EarnScreenState extends State<EarnScreen> {
     await _addCoinsToWallet(499);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Congratulations!"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.monetization_on, color: Colors.amber, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              "+499 Coins",
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Congratulations!"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.monetization_on,
+                  color: Colors.amber,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "+499 Coins",
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text("Coins have been added to your wallet!"),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text("Coins have been added to your wallet!"),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("OK"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("OK"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -189,29 +200,17 @@ class _EarnScreenState extends State<EarnScreen> {
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop(); // Redirects to previous/home page
+          },
+        ),
         title: const Text("Refer & Earn"),
         backgroundColor: Colors.blueAccent,
         elevation: 2,
         centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.account_balance_wallet, color: Colors.white),
-                const SizedBox(width: 4),
-                Text(
-                  walletCoins.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        // Remove the actions property to hide the wallet icon and coins
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth_screen.dart';
 import 'scratch_card_screen.dart';
@@ -18,11 +19,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int userCoins = 0;
   String userName = "User";
+  int walletCoins = 0;
 
   @override
   void initState() {
     super.initState();
     _fetchUserData();
+    _loadWalletCoins();
   }
 
   void _fetchUserData() {
@@ -37,6 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       });
     }
+  }
+
+  Future<void> _loadWalletCoins() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      walletCoins = prefs.getInt('wallet_coins') ?? 0;
+    });
   }
 
   void _logout(BuildContext context) {
