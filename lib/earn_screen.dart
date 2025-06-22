@@ -15,11 +15,28 @@ class EarnScreen extends StatefulWidget {
 class _EarnScreenState extends State<EarnScreen> {
   String? referralCode;
   final TextEditingController _referralInputController = TextEditingController();
+  int walletCoins = 0;
 
   @override
   void initState() {
     super.initState();
     _loadOrGenerateReferralCode();
+    _loadWalletCoins();
+  }
+
+  Future<void> _loadWalletCoins() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      walletCoins = prefs.getInt('wallet_coins') ?? 0;
+    });
+  }
+
+  Future<void> _addCoinsToWallet(int coins) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      walletCoins += coins;
+    });
+    await prefs.setInt('wallet_coins', walletCoins);
   }
 
   Future<void> _loadOrGenerateReferralCode() async {
@@ -61,7 +78,22 @@ class _EarnScreenState extends State<EarnScreen> {
     );
   }
 
-  void _claimCoins(BuildContext context) {
+  void _claimCoins(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Check if already claimed
+    final alreadyClaimed = prefs.getBool('coins_claimed') ?? false;
+    if (alreadyClaimed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("You have already claimed your coins!"),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        ),
+      );
+      return;
+    }
+
     final enteredCode = _referralInputController.text.trim();
 
     // 1. Check if empty
@@ -101,15 +133,9 @@ class _EarnScreenState extends State<EarnScreen> {
       return;
     }
 
-    // 4. (Optional) Prevent duplicate use: store used codes in SharedPreferences
-    // For demonstration, let's check and store used codes
-    _checkAndStoreUsedCode(context, enteredCode);
-  }
-
-  Future<void> _checkAndStoreUsedCode(BuildContext context, String code) async {
-    final prefs = await SharedPreferences.getInstance();
+    // 4. Prevent duplicate use: store used codes in SharedPreferences
     final usedCodes = prefs.getStringList('used_referral_codes') ?? [];
-    if (usedCodes.contains(code)) {
+    if (usedCodes.contains(enteredCode)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("This referral code has already been used!"),
@@ -119,15 +145,41 @@ class _EarnScreenState extends State<EarnScreen> {
       );
       return;
     }
-    usedCodes.add(code);
+    usedCodes.add(enteredCode);
     await prefs.setStringList('used_referral_codes', usedCodes);
 
-    // Success!
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Coins claimed!"),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+    // Mark as claimed for lifetime
+    await prefs.setBool('coins_claimed', true);
+
+    // Add 499 coins and show pop-out
+    await _addCoinsToWallet(499);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Congratulations!"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.monetization_on, color: Colors.amber, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              "+499 Coins",
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text("Coins have been added to your wallet!"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
       ),
     );
   }
@@ -141,6 +193,25 @@ class _EarnScreenState extends State<EarnScreen> {
         backgroundColor: Colors.blueAccent,
         elevation: 2,
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.account_balance_wallet, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  walletCoins.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
