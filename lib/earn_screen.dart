@@ -63,6 +63,8 @@ class _EarnScreenState extends State<EarnScreen> {
 
   void _claimCoins(BuildContext context) {
     final enteredCode = _referralInputController.text.trim();
+
+    // 1. Check if empty
     if (enteredCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -73,6 +75,21 @@ class _EarnScreenState extends State<EarnScreen> {
       );
       return;
     }
+
+    // 2. Check if format is correct: KAMAO + 3 digits + 1 capital letter
+    final codeRegExp = RegExp(r'^KAMAO\d{3}[A-Z]$');
+    if (!codeRegExp.hasMatch(enteredCode)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Referral code format is wrong!"),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        ),
+      );
+      return;
+    }
+
+    // 3. Prevent using own code
     if (enteredCode == referralCode) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -83,7 +100,29 @@ class _EarnScreenState extends State<EarnScreen> {
       );
       return;
     }
-    // Add your claim coins logic here for valid referral code
+
+    // 4. (Optional) Prevent duplicate use: store used codes in SharedPreferences
+    // For demonstration, let's check and store used codes
+    _checkAndStoreUsedCode(context, enteredCode);
+  }
+
+  Future<void> _checkAndStoreUsedCode(BuildContext context, String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    final usedCodes = prefs.getStringList('used_referral_codes') ?? [];
+    if (usedCodes.contains(code)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("This referral code has already been used!"),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        ),
+      );
+      return;
+    }
+    usedCodes.add(code);
+    await prefs.setStringList('used_referral_codes', usedCodes);
+
+    // Success!
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text("Coins claimed!"),
