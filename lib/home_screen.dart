@@ -31,14 +31,18 @@ class _HomeScreenState extends State<HomeScreen> {
   void _fetchUserData() {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots().listen((doc) {
-        if (doc.exists) {
-          setState(() {
-            userName = doc['name'] ?? "User";
-            userCoins = doc['coins'] ?? 0;
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((doc) {
+            if (doc.exists) {
+              setState(() {
+                userName = doc['name'] ?? "User";
+                userCoins = doc['coins'] ?? 0;
+              });
+            }
           });
-        }
-      });
     }
   }
 
@@ -52,26 +56,30 @@ class _HomeScreenState extends State<HomeScreen> {
   void _logout(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Confirm Logout"),
-        content: const Text("Are you sure you want to log out?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text("Confirm Logout"),
+            content: const Text("Are you sure you want to log out?"),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () {
+                  FirebaseAuth.instance.signOut();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AuthScreen()),
+                  );
+                },
+                child: const Text(
+                  "Logout",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const AuthScreen()),
-              );
-            },
-            child: const Text("Logout", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 
@@ -114,7 +122,9 @@ class _HomeScreenState extends State<HomeScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.purpleAccent.shade700, Colors.deepPurple.shade400]),
+        gradient: LinearGradient(
+          colors: [Colors.purpleAccent.shade700, Colors.deepPurple.shade400],
+        ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -131,29 +141,44 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               "Hi $userName 👋",
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           GestureDetector(
             onTap: () {
               showDialog(
                 context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Row(
-                    children: const [
-                      Icon(Icons.account_balance_wallet, color: Colors.deepPurpleAccent),
-                      SizedBox(width: 8),
-                      Text("Wallet Balance"),
-                    ],
-                  ),
-                  content: Text(
-                    "$userCoins Coins",
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.green.shade700),
-                  ),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Close")),
-                  ],
-                ),
+                builder:
+                    (ctx) => AlertDialog(
+                      title: Row(
+                        children: const [
+                          Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.deepPurpleAccent,
+                          ),
+                          SizedBox(width: 8),
+                          Text("Wallet Balance"),
+                        ],
+                      ),
+                      content: Text(
+                        "$userCoins Coins",
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade700,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text("Close"),
+                        ),
+                      ],
+                    ),
               );
             },
             child: Container(
@@ -162,7 +187,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.account_balance_wallet, color: Colors.yellowAccent, size: 30),
+              child: const Icon(
+                Icons.account_balance_wallet,
+                color: Colors.yellowAccent,
+                size: 30,
+              ),
             ),
           ),
         ],
@@ -181,21 +210,60 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisSpacing: 16,
         childAspectRatio: 1.1,
         children: [
-          _buildEarningBox(context, "Scratch Card", Icons.card_giftcard, Colors.deepPurple, const ScratchCardScreen()),
-          _buildEarningBox(context, "Spin & Win", Icons.rotate_right, Colors.deepPurple, const SpinWheelScreen()),
-          _buildEarningBox(context, "Watch Ads", Icons.video_collection, Colors.deepPurple, const WatchAdsScreen()), // ✅ Updated
-          _buildEarningBox(context, "Promo Code", Icons.discount, Colors.deepPurple, null),
-          _buildEarningBox(context, "Daily Bonus", Icons.stars, Colors.deepPurple, const DailyBonusScreen()),
+          _buildEarningBox(
+            context,
+            "Scratch Card",
+            Icons.card_giftcard,
+            Colors.deepPurple,
+            const ScratchCardScreen(),
+          ),
+          _buildEarningBox(
+            context,
+            "Spin & Win",
+            Icons.rotate_right,
+            Colors.deepPurple,
+            const SpinWheelScreen(),
+          ),
+          _buildEarningBox(
+            context,
+            "Watch Ads",
+            Icons.video_collection,
+            Colors.deepPurple,
+            const WatchAdsScreen(),
+          ), // ✅ Updated
+          _buildEarningBox(
+            context,
+            "Promo Code",
+            Icons.discount,
+            Colors.deepPurple,
+            null,
+          ),
+          _buildEarningBox(
+            context,
+            "Daily Bonus",
+            Icons.stars,
+            Colors.deepPurple,
+            const DailyBonusScreen(),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEarningBox(BuildContext context, String title, IconData icon, Color color, Widget? page) {
+  Widget _buildEarningBox(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+    Widget? page,
+  ) {
     return GestureDetector(
       onTap: () {
         if (page != null) {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => page),
+          );
         }
       },
       child: Card(
@@ -206,7 +274,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(icon, size: 50, color: color),
             const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
