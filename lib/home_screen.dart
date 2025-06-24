@@ -84,7 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 4,
         title: const Text(
           "Kamao Money 💰",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
         actions: [
