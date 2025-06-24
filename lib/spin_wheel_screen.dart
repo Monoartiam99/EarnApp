@@ -98,7 +98,7 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     return Scaffold(
       backgroundColor: Colors.blueGrey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color.fromARGB(255, 157, 42, 196),
         title: const Text(
           "🎡 Spin & Win",
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
@@ -144,7 +144,7 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Colors.blueAccent, Colors.lightBlue],
+          colors: [Color.fromARGB(255, 129, 21, 162), Colors.lightBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -225,7 +225,7 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
       icon: const Icon(Icons.sports_esports, size: 28),
       label: const Text("SPIN NOW"),
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blueAccent.shade700,
+        backgroundColor: const Color.fromARGB(255, 219, 41, 255),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
         textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

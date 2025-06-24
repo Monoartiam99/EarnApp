@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WatchAdsScreen extends StatefulWidget {
   const WatchAdsScreen({super.key});
@@ -40,11 +42,29 @@ class _WatchAdsScreenState extends State<WatchAdsScreen> {
           );
 
           _rewardedAd!.show(
-            onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
+            onUserEarnedReward: (AdWithoutView ad, RewardItem reward) async {
               print("🎉 User earned reward: ${reward.amount} ${reward.type}");
-              _showSnackBar("Reward earned: ${reward.amount} ${reward.type}");
+
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .update({
+                    'coins': FieldValue.increment(reward.amount.toInt()),
+                  });
+                  _showSnackBar("Coins added: ${reward.amount} 🎁");
+                } catch (e) {
+                  print("🔥 Failed to update coins: $e");
+                  _showSnackBar("Failed to add coins");
+                }
+              } else {
+                _showSnackBar("User not logged in");
+              }
             },
           );
+
           setState(() => _isLoading = false);
         },
         onAdFailedToLoad: (error) {
