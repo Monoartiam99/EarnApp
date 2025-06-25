@@ -2,12 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'auth_screen.dart';
 import 'scratch_card_screen.dart';
 import 'spin_wheel_screen.dart';
 import 'daily_bonus.dart';
 import 'watch_ads_screen.dart'; // ✅ Added this import
+import 'profile_screen.dart';
+import 'earn_screen.dart';
+import 'withdraw_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -105,6 +110,115 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => _logout(context),
           ),
         ],
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: Colors.deepPurple),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ProfileScreen(),
+                        ),
+                      );
+                    },
+                    child: CircleAvatar(
+                      radius: 36,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 48,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    userName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Home
+            const ListTile(leading: Icon(Icons.home), title: Text('Home')),
+            // Refer & Earn
+            ListTile(
+              leading: const Icon(Icons.share, color: Colors.deepPurple),
+              title: const Text('Refer & Earn'),
+              onTap: () {
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => EarnScreen()));
+              },
+            ),
+            // Withdraw
+            ListTile(
+              leading: const Icon(
+                Icons.account_balance_wallet,
+                color: Colors.deepPurple,
+              ),
+              title: const Text('Withdraw'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => WithdrawScreen()),
+                );
+              },
+            ),
+            // --- Add these for social media ---
+            const Divider(),
+            ListTile(
+              leading: const FaIcon(FontAwesomeIcons.instagram, color: Colors.pink),
+              title: const Text('Instagram'),
+              onTap: () async {
+                const url = 'https://www.instagram.com/kamao_money_official?igsh=bXV4bXAwdndoMDMz';
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  await launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const FaIcon(FontAwesomeIcons.telegram, color: Colors.blue),
+              title: const Text('Telegram'),
+              onTap: () async {
+                const url = 'https://t.me/kamao_money_official';
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  await launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: const FaIcon(FontAwesomeIcons.youtube, color: Colors.red),
+              title: const Text('YouTube'),
+              onTap: () async {
+                const url = 'https://youtube.com/@kamao_money_official?si=iUhNc6P-yMfQyW7m';
+                if (await canLaunchUrl(Uri.parse(url))) {
+                  await launchUrl(
+                    Uri.parse(url),
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
+              },
+            ),
+            // ...rest of your Drawer...
+          ],
+        ),
       ),
       body: SingleChildScrollView(
         child: Padding(
