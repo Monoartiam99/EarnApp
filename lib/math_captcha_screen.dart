@@ -17,9 +17,9 @@ class _MathCaptchaScreenState extends State<MathCaptchaScreen> {
   final TextEditingController _controller = TextEditingController();
   String _message = '';
   bool _isLoading = false;
+  int _dailyCount = 0;
 
   static const int rewardAmount = 10;
-
   RewardedAd? _rewardedAd;
   bool _isAdLoaded = false;
 
@@ -28,6 +28,7 @@ class _MathCaptchaScreenState extends State<MathCaptchaScreen> {
     super.initState();
     _generateCaptcha();
     _loadRewardedAd();
+    _fetchDailyCount(); // Load count on init
   }
 
   void _generateCaptcha() {
@@ -55,6 +56,36 @@ class _MathCaptchaScreenState extends State<MathCaptchaScreen> {
     );
   }
 
+  Future<void> _fetchDailyCount() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final snapshot = await docRef.get();
+    final data = snapshot.data() ?? {};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime? lastDate;
+
+    if (data['lastCaptchaDate'] != null) {
+      lastDate = DateTime.tryParse(data['lastCaptchaDate']);
+    }
+
+    int dailyCount = data['dailyCaptchaCount'] ?? 0;
+
+    if (lastDate == null || lastDate.isBefore(today)) {
+      dailyCount = 0;
+      await docRef.update({
+        'lastCaptchaDate': today.toIso8601String(),
+        'dailyCaptchaCount': 0,
+      });
+    }
+
+    setState(() {
+      _dailyCount = dailyCount;
+    });
+  }
+
   Future<void> _submitAnswer() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -67,9 +98,35 @@ class _MathCaptchaScreenState extends State<MathCaptchaScreen> {
       return;
     }
 
+    final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final snapshot = await docRef.get();
+    final data = snapshot.data() ?? {};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    DateTime? lastDate;
+
+    if (data['lastCaptchaDate'] != null) {
+      lastDate = DateTime.tryParse(data['lastCaptchaDate']);
+    }
+
+    int dailyCount = data['dailyCaptchaCount'] ?? 0;
+
+    if (lastDate == null || lastDate.isBefore(today)) {
+      dailyCount = 0;
+      await docRef.update({
+        'lastCaptchaDate': today.toIso8601String(),
+        'dailyCaptchaCount': 0,
+      });
+    }
+
+    if (dailyCount >= 10) {
+      setState(() => _message = '🔒 Daily limit reached. Try again tomorrow!');
+      return;
+    }
+
     if (_rewardedAd == null || !_isAdLoaded) {
       setState(() {
-        _message = 'Ad not available.';
+        _message = '⚠️ Ad not available. Please try again shortly.';
       });
       return;
     }
@@ -77,15 +134,16 @@ class _MathCaptchaScreenState extends State<MathCaptchaScreen> {
     setState(() => _isLoading = true);
 
     _rewardedAd!.show(
-      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) async {
+      onUserEarnedReward: (ad, reward) async {
         try {
-          final docRef = FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid);
-          await docRef.update({'coins': FieldValue.increment(rewardAmount)});
+          await docRef.update({
+            'coins': FieldValue.increment(rewardAmount),
+            'dailyCaptchaCount': FieldValue.increment(1),
+          });
 
           setState(() {
             _message = '✅ Correct! +$rewardAmount Coins added.';
+            _dailyCount += 1;
           });
 
           Future.delayed(const Duration(seconds: 2), _generateCaptcha);
@@ -114,57 +172,84 @@ class _MathCaptchaScreenState extends State<MathCaptchaScreen> {
     return Scaffold(
       backgroundColor: Colors.deepPurple.shade50,
       appBar: AppBar(
-        title: const Text('🧠 Captcha Fill & Earn'),
-        backgroundColor: Colors.deepPurple,
+        title: const Text('Captcha Fill & Earn'),
+        backgroundColor: Color(0xFFA15FFF), // Light purple shade
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Solve to Earn Coins:',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade700,
-                ),
+          child: Card(
+            elevation: 8,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Solve to Earn Coins',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Solved: $_dailyCount / 10 today',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.deepPurple.shade400,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    '$_num1 + $_num2 = ?',
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _controller,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your answer',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _isLoading
+                      ? const CircularProgressIndicator()
+                      : ElevatedButton(
+                    onPressed: _submitAnswer,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                    ),
+                    child: const Text(
+                      'Submit',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    _message,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: _message.startsWith('✅')
+                          ? Colors.green
+                          : _message.startsWith('⚠️') || _message.startsWith('🔒')
+                          ? Colors.orange
+                          : Colors.red,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Text(
-                '$_num1 + $_num2 = ?',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _controller,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your answer',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                onPressed: _submitAnswer,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-                child: const Text('Submit'),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                _message,
-                style: TextStyle(
-                  fontSize: 18,
-                  color: _message.startsWith('✅') ? Colors.green : Colors.red,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -130,13 +130,13 @@ class _DailyBonusScreenState extends State<DailyBonusScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primary = const Color(0xFF6A0DAD);
+    final Color primary = const Color(0xFFB052F8);
     final Color green = Colors.green;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F0FA),
       appBar: AppBar(
-        title: const Text("🎁 Daily Bonus"),
+        title: const Text("Daily Bonus"),
         backgroundColor: primary,
         centerTitle: true,
         elevation: 4,
