@@ -8,7 +8,7 @@ class RewardedAdHelper {
     Function? onAdFailed,
   }) {
     RewardedAd.load(
-      adUnitId: 'ca-app-pub-3940256099942544/5224354917',
+      adUnitId: 'ca-app-pub-8587580291187103/4322558198',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (RewardedAd ad) {
