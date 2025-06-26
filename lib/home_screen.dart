@@ -14,6 +14,8 @@ import 'profile_screen.dart';
 import 'earn_screen.dart';
 import 'withdraw_screen.dart';
 import 'math_captcha_screen.dart';
+import 'promo_code_screen.dart'; // ✅ add this
+
 
 
 class HomeScreen extends StatefulWidget {
@@ -330,12 +332,13 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisSpacing: 16,
         childAspectRatio: 1.1,
         children: [
+
           _buildEarningBox(
             context,
-            "Captcha Earn",
-            Icons.calculate_outlined,
+            "Daily Bonus",
+            Icons.stars,
             Colors.deepPurple,
-            const MathCaptchaScreen(),
+            const DailyBonusScreen(),
           ),
 
 
@@ -359,20 +362,21 @@ class _HomeScreenState extends State<HomeScreen> {
             Icons.video_collection,
             Colors.deepPurple,
             const WatchAdsScreen(),
-          ), // ✅ Updated
+          ),
           _buildEarningBox(
             context,
             "Promo Code",
             Icons.discount,
             Colors.deepPurple,
-            null,
+            const PromoCodeScreen(),
           ),
+
           _buildEarningBox(
             context,
-            "Daily Bonus",
-            Icons.stars,
+            "Captcha Earn",
+            Icons.calculate_outlined,
             Colors.deepPurple,
-            const DailyBonusScreen(),
+            const MathCaptchaScreen(),
           ),
         ],
       ),
