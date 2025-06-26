@@ -17,73 +17,117 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
   final List<int> coinOptions = [10, 20, 30, 40, 50];
   final StreamController<int> _controller = StreamController<int>();
   int userCoins = 0;
+  int spinCount = 0;
+  String? lastSpinDate;
+  final int maxSpinsPerDay = 10;
   int? _reward;
   int? _selectedIndex;
   bool _isSpinning = false;
 
   RewardedAd? _rewardedAd;
-  bool _isAdLoaded = false;
+  bool _isRewardedAdLoaded = false;
 
   @override
   void initState() {
     super.initState();
     MobileAds.instance.initialize();
-    _fetchUserCoins();
+    _fetchUserData();
     _loadRewardedAd();
   }
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId:
-          'ca-app-pub-3940256099942544/5224354917', // Official Google test ad unit
+      adUnitId: 'ca-app-pub-8587580291187103/1028528058',
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
+        onAdLoaded: (RewardedAd ad) {
           _rewardedAd = ad;
-          _isAdLoaded = true;
+          _isRewardedAdLoaded = true;
+
+          _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              ad.dispose();
+              _isRewardedAdLoaded = false;
+              _loadRewardedAd();
+            },
+            onAdFailedToShowFullScreenContent: (ad, error) {
+              ad.dispose();
+              _isRewardedAdLoaded = false;
+              _loadRewardedAd();
+            },
+          );
         },
         onAdFailedToLoad: (error) {
-          _isAdLoaded = false;
+          _isRewardedAdLoaded = false;
         },
       ),
     );
   }
 
-  void _fetchUserCoins() {
+  void _fetchUserData() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots()
-          .listen((doc) {
-            if (doc.exists) {
-              setState(() {
-                userCoins = doc['coins'] ?? 0;
-              });
-            }
+      FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots().listen((doc) {
+        if (doc.exists) {
+          final today = DateTime.now();
+          final todayStr = "${today.year}-${today.month}-${today.day}";
+          final savedDate = doc['lastSpinDate'] ?? "";
+          setState(() {
+            userCoins = doc['coins'] ?? 0;
+            spinCount = (savedDate == todayStr) ? (doc['spinCount'] ?? 0) : 0;
+            lastSpinDate = todayStr;
           });
+        }
+      });
     }
   }
 
   Future<void> _updateUserCoins() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null && _reward != null) {
-      final userDoc = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid);
-      await userDoc.update({'coins': FieldValue.increment(_reward!)});
+      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final today = DateTime.now();
+      final todayStr = "${today.year}-${today.month}-${today.day}";
+      await docRef.update({
+        'coins': FieldValue.increment(_reward!),
+        'spinCount': FieldValue.increment(1),
+        'lastSpinDate': todayStr,
+      });
     }
   }
 
   void _spinWheel() {
     if (_isSpinning) return;
+    if (spinCount >= maxSpinsPerDay) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You have reached your daily spin limit!")),
+      );
+      return;
+    }
+
     final index = Random().nextInt(coinOptions.length);
     _selectedIndex = index;
     _controller.add(index);
     setState(() {
       _isSpinning = true;
+      _reward = null;
     });
+  }
+
+  void _showRewardedAd() {
+    if (_isRewardedAdLoaded && _rewardedAd != null) {
+      _rewardedAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) async {
+          await _updateUserCoins();
+        },
+      );
+      _rewardedAd = null;
+      _isRewardedAdLoaded = false;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ad not loaded yet. Please try again.")),
+      );
+    }
   }
 
   @override
@@ -99,10 +143,7 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
       backgroundColor: Colors.blueGrey.shade50,
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 157, 42, 196),
-        title: const Text(
-          "🎡 Spin & Win",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-        ),
+        title: const Text("Spin & Win", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -113,7 +154,11 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildWalletBalance(),
+                  Text("Wallet Balance: $userCoins Coins",
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange)),
+                  const SizedBox(height: 12),
+                  Text("Spins left today: ${maxSpinsPerDay - spinCount}",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 20),
                   _buildWheelContainer(),
                   const SizedBox(height: 40),
@@ -129,17 +174,6 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
     );
   }
 
-  Widget _buildWalletBalance() {
-    return Text(
-      "Wallet Balance: $userCoins Coins",
-      style: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.bold,
-        color: Colors.orange,
-      ),
-    );
-  }
-
   Widget _buildWheelContainer() {
     return Container(
       decoration: BoxDecoration(
@@ -149,13 +183,7 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, 4))],
       ),
       padding: const EdgeInsets.all(16),
       child: SizedBox(
@@ -164,48 +192,26 @@ class _SpinWheelScreenState extends State<SpinWheelScreen> {
         child: FortuneWheel(
           selected: _controller.stream,
           animateFirst: false,
-          items:
-              coinOptions
-                  .map(
-                    (value) => FortuneItem(
-                      child: Text(
-                        "$value Coins",
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: FortuneItemStyle(
-                        color:
-                            Colors
-                                .accents[Random().nextInt(
-                                  Colors.accents.length,
-                                )]
-                                .shade400,
-                        borderColor: Colors.white,
-                        borderWidth: 2,
-                      ),
-                    ),
-                  )
-                  .toList(),
+          items: coinOptions.map((value) {
+            return FortuneItem(
+              child: Text(
+                "$value Coins",
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              style: FortuneItemStyle(
+                color: Colors.accents[Random().nextInt(Colors.accents.length)].shade400,
+                borderColor: Colors.white,
+                borderWidth: 2,
+              ),
+            );
+          }).toList(),
           onAnimationEnd: () {
             if (_selectedIndex != null) {
               setState(() {
                 _reward = coinOptions[_selectedIndex!];
                 _isSpinning = false;
               });
-              _updateUserCoins();
-
-              if (_isAdLoaded && _rewardedAd != null) {
-                _rewardedAd!.show(
-                  onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-                    // Optionally grant bonus coins here
-                  },
-                );
-                _rewardedAd = null;
-                _isAdLoaded = false;
-                _loadRewardedAd();
-              }
+              _showRewardedAd(); // show ad after wheel animation
             }
           },
           indicators: const [
