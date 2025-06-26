@@ -19,60 +19,91 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
   int _reward = 0;
   int _scratchKey = DateTime.now().millisecondsSinceEpoch;
 
-  InterstitialAd? _interstitialAd;
-  bool _isInterstitialLoaded = false;
+  int scratchCount = 0;
+  String todayDate = "";
+  final int maxScratchesPerDay = 10;
+
+  RewardedAd? _rewardedAd;
+  bool _isRewardedLoaded = false;
 
   @override
   void initState() {
     super.initState();
     MobileAds.instance.initialize();
     _generateReward();
-    _loadInterstitialAd();
+    _loadRewardedAd();
+    _fetchUserData();
   }
 
   void _generateReward() {
     final random = Random();
-    _reward = 10 + random.nextInt(41); // ₹10–₹50
+    _reward = 5 + random.nextInt(26); // 5–30 coins
   }
 
-  void _loadInterstitialAd() {
-    InterstitialAd.load(
-      adUnitId: 'ca-app-pub-8587580291187103/3458416125',
+  void _loadRewardedAd() {
+    RewardedAd.load(
+      adUnitId: 'ca-app-pub-8587580291187103/1477467655',
       request: const AdRequest(),
-      adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (InterstitialAd ad) {
-          _interstitialAd = ad;
-          _isInterstitialLoaded = true;
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (RewardedAd ad) {
+          _rewardedAd = ad;
+          _isRewardedLoaded = true;
 
-          _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+          _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
             onAdDismissedFullScreenContent: (ad) {
               ad.dispose();
-              _isInterstitialLoaded = false;
-              _loadInterstitialAd();
+              _loadRewardedAd();
             },
             onAdFailedToShowFullScreenContent: (ad, error) {
               ad.dispose();
-              _isInterstitialLoaded = false;
-              _loadInterstitialAd();
+              _loadRewardedAd();
             },
           );
         },
         onAdFailedToLoad: (LoadAdError error) {
-          _isInterstitialLoaded = false;
+          _isRewardedLoaded = false;
         },
       ),
     );
   }
 
-  Future<void> _updateUserCoins() async {
+  void _fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
-      await userDoc.update({'coins': FieldValue.increment(_reward)});
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final now = DateTime.now();
+      final todayStr = "${now.year}-${now.month}-${now.day}";
+
+      final lastDate = doc['lastScratchDate'] ?? "";
+      final count = doc['scratchCount'] ?? 0;
+
+      setState(() {
+        todayDate = todayStr;
+        scratchCount = (lastDate == todayStr) ? count : 0;
+      });
+    }
+  }
+
+  Future<void> _updateUserStats() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      await docRef.update({
+        'coins': FieldValue.increment(_reward),
+        'scratchCount': FieldValue.increment(1),
+        'lastScratchDate': todayDate,
+      });
     }
   }
 
   void _resetCard() {
+    if (scratchCount >= maxScratchesPerDay) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You have used all 10 scratch cards today.")),
+      );
+      return;
+    }
+
     setState(() {
       _revealed = false;
       _generateReward();
@@ -80,62 +111,74 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
     });
   }
 
-  void _showInterstitialAd() {
-    if (_isInterstitialLoaded && _interstitialAd != null) {
-      _interstitialAd!.show();
-      _isInterstitialLoaded = false;
-      _interstitialAd = null;
-    }
-  }
-
   void _handleScratchCompletion() async {
     HapticFeedback.mediumImpact();
     setState(() => _revealed = true);
-    await _updateUserCoins();
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text("🎉 Congratulations!"),
+        title: const Text("🎉 Scratch Complete!"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.monetization_on, color: Colors.amber, size: 48),
+            const Icon(Icons.play_circle_fill, color: Colors.deepPurple, size: 48),
             const SizedBox(height: 16),
-            Text(
-              "+$_reward Coins",
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
+            const Text(
+              "Watch the ad to claim your coins!",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 8),
-            const Text("Coins have been added to your wallet!"),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("OK"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showRewardedAd();
+            },
+            child: const Text("Watch Ad"),
           ),
         ],
       ),
     );
+  }
 
-    _showInterstitialAd();
+  void _showRewardedAd() {
+    if (_isRewardedLoaded && _rewardedAd != null) {
+      _rewardedAd!.show(
+        onUserEarnedReward: (AdWithoutView ad, RewardItem rewardItem) async {
+          setState(() {
+            scratchCount++;
+          });
+          await _updateUserStats();
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("✅ +$_reward Coins added to your wallet!")),
+          );
+        },
+      );
+      _rewardedAd = null;
+      _isRewardedLoaded = false;
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ad not available. Please try again.")),
+      );
+    }
   }
 
   @override
   void dispose() {
-    _interstitialAd?.dispose();
+    _rewardedAd?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final remaining = maxScratchesPerDay - scratchCount;
+
     return Scaffold(
       backgroundColor: Colors.blueGrey.shade50,
       appBar: AppBar(
@@ -148,12 +191,17 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text(
+              "Scratches Left Today: $remaining",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+            const SizedBox(height: 10),
             Scratcher(
               key: ValueKey(_scratchKey),
               brushSize: 40,
               threshold: 50,
               color: Colors.grey.shade400,
-              onThreshold: _handleScratchCompletion,
+              onThreshold: scratchCount < maxScratchesPerDay ? _handleScratchCompletion : null,
               child: Container(
                 height: 240,
                 width: 330,
@@ -192,7 +240,8 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      const Text("Lucky strike! 🚀", style: TextStyle(color: Colors.white70, fontSize: 16)),
+                      const Text("Lucky strike! 🚀",
+                          style: TextStyle(color: Colors.white70, fontSize: 16)),
                     ],
                   )
                       : const Text(
@@ -209,7 +258,7 @@ class _ScratchCardScreenState extends State<ScratchCardScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            if (_revealed)
+            if (_revealed && scratchCount < maxScratchesPerDay)
               ElevatedButton.icon(
                 onPressed: _resetCard,
                 icon: const Icon(Icons.replay),

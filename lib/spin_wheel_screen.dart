@@ -14,7 +14,7 @@ class SpinWheelScreen extends StatefulWidget {
 }
 
 class _SpinWheelScreenState extends State<SpinWheelScreen> {
-  final List<int> coinOptions = [10, 20, 30, 40, 50];
+  final List<int> coinOptions = [5, 8, 10, 17, 30];
   final StreamController<int> _controller = StreamController<int>();
   int userCoins = 0;
   int spinCount = 0;

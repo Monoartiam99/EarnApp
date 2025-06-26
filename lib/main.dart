@@ -8,6 +8,8 @@ import 'auth_screen.dart';
 import 'earn_screen.dart';
 import 'profile_screen.dart';
 import 'withdraw_screen.dart';
+import 'math_captcha_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

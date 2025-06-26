@@ -13,6 +13,8 @@ import 'watch_ads_screen.dart'; // ✅ Added this import
 import 'profile_screen.dart';
 import 'earn_screen.dart';
 import 'withdraw_screen.dart';
+import 'math_captcha_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -328,6 +330,15 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisSpacing: 16,
         childAspectRatio: 1.1,
         children: [
+          _buildEarningBox(
+            context,
+            "Captcha Earn",
+            Icons.calculate_outlined,
+            Colors.deepPurple,
+            const MathCaptchaScreen(),
+          ),
+
+
           _buildEarningBox(
             context,
             "Scratch Card",
