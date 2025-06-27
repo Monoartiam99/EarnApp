@@ -29,6 +29,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   void _authenticate() async {
     if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
 
     setState(() {
       isLoading = true;
@@ -49,10 +50,17 @@ class _AuthScreenState extends State<AuthScreen> {
           password: password,
         );
 
+        // Store full name and email in Firestore
         await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
-            .set({'name': name, 'email': email, 'phone': phone});
+            .set({
+              'name': name,
+              'email': email,
+              'phone': phone,
+            });
+        // Update displayName in Firebase Auth profile
+        await userCredential.user!.updateDisplayName(name);
       }
 
       if (userCredential.user != null) {
@@ -61,6 +69,10 @@ class _AuthScreenState extends State<AuthScreen> {
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );
       }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        errorMessage = e.message;
+      });
     } catch (e) {
       setState(() {
         errorMessage = e.toString();
@@ -193,7 +205,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   filled: true,
                                   fillColor: Colors.blue[50],
                                 ),
-                                onChanged: (val) => name = val,
+                                onSaved: (val) => name = val ?? '',
                                 validator:
                                     (val) =>
                                         val == null || val.isEmpty
@@ -212,7 +224,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                   fillColor: Colors.blue[50],
                                 ),
                                 keyboardType: TextInputType.phone,
-                                onChanged: (val) => phone = val,
+                                onSaved: (val) => phone = val ?? '',
                                 validator:
                                     (val) =>
                                         val == null || val.isEmpty
@@ -234,7 +246,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             fillColor: Colors.blue[50],
                           ),
                           keyboardType: TextInputType.emailAddress,
-                          onChanged: (val) => email = val,
+                          onSaved: (val) => email = val ?? '',
                           validator:
                               (val) =>
                                   val!.isEmpty || !val.contains('@')
@@ -266,7 +278,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             ),
                           ),
                           obscureText: !showPassword,
-                          onChanged: (val) => password = val,
+                          onSaved: (val) => password = val ?? '',
                           validator:
                               (val) =>
                                   val!.length < 6
@@ -301,7 +313,7 @@ class _AuthScreenState extends State<AuthScreen> {
                               ),
                             ),
                             obscureText: !showConfirmPassword,
-                            onChanged: (val) => confirmPassword = val,
+                            onSaved: (val) => confirmPassword = val ?? '',
                             validator:
                                 (val) =>
                                     val != password
