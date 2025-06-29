@@ -217,9 +217,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       decoration: _inputDecoration('Phone', Icons.phone),
                       keyboardType: TextInputType.phone,
                       onSaved: (val) => phone = val ?? '',
-                      validator: (val) => val == null || val.isEmpty
-                          ? 'Enter your phone number'
-                          : null,
+                      validator: (val) =>
+                          val == null || val.isEmpty ? 'Enter your phone number' : null,
                     ),
                     const SizedBox(height: 16),
                   ],
