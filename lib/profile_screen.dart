@@ -15,10 +15,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String name = '';
   String email = '';
   String phone = '';
+  int coins = 0;
   bool isLoading = true;
-  bool canEditPhone = false;
+  bool phoneAlreadySet = false;
+
   final TextEditingController _phoneController = TextEditingController();
-  bool phoneUpdated = false;
 
   @override
   void initState() {
@@ -30,11 +31,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final doc =
-            await FirebaseFirestore.instance
-                .collection('users')
-                .doc(user.uid)
-                .get();
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
         if (doc.exists) {
           final data = doc.data() as Map<String, dynamic>;
@@ -42,12 +42,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             name = data['name'] ?? 'No Name';
             email = data['email'] ?? 'No Email';
             phone = data['phone'] ?? '';
+            coins = data['coins'] ?? 0;
             _phoneController.text = phone;
-            // Allow edit ONLY if Google user
-            canEditPhone = user.providerData.any(
-              (info) => info.providerId == 'google.com',
-            );
-            phoneUpdated = phone.isNotEmpty;
+            phoneAlreadySet = phone.isNotEmpty;
             isLoading = false;
           });
         } else {
@@ -65,67 +62,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void logout() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const AuthScreen()),
-      (route) => false,
-    );
-  }
-
-  void toggleEditPhone() {
-    setState(() {
-      canEditPhone = !canEditPhone;
-      if (!canEditPhone) {
-        // Save the phone number if editing is disabled
-        phone = _phoneController.text;
-        // Here you can add the code to update the phone number in Firestore
-      }
-    });
-  }
-
   Future<void> updatePhone() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null && _phoneController.text.isNotEmpty) {
-      // Only allow 10-digit numerical phone numbers
-      if (_phoneController.text.length == 10 && RegExp(r'^\d{10}$').hasMatch(_phoneController.text)) {
+    if (user != null && _phoneController.text.isNotEmpty && !phoneAlreadySet) {
+      final phoneText = _phoneController.text.trim();
+      if (phoneText.length == 10 && RegExp(r'^\d{10}$').hasMatch(phoneText)) {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
-            .update({
-          'phone': _phoneController.text,
-        });
+            .update({'phone': phoneText});
         setState(() {
-          phone = _phoneController.text;
+          phone = phoneText;
+          phoneAlreadySet = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Phone number updated!')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid 10-digit phone number')),
+          const SnackBar(content: Text('Enter valid 10-digit phone number')),
         );
       }
     }
   }
-          .update({
-        'phone': _phoneController.text,
-      });
-      setState(() {
-        phone = _phoneController.text;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number updated!')),
-      );
-    }
-  }
-      setState(() {
-        phone = _phoneController.text;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Phone number updated!')),
-      );
-    }
+
+  void logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const AuthScreen()),
+          (route) => false,
+    );
   }
 
   @override
@@ -137,15 +103,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: lightViolet.withOpacity(0.15),
       appBar: AppBar(
         backgroundColor: primary,
-        elevation: 0,
-        title: const Text(
-          "My Profile",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        title: const Text("My Profile"),
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -154,15 +118,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: 55,
                 backgroundColor: lightViolet,
-                child: const Icon(
-                  Icons.person,
-                  size: 60,
-                  color: Colors.deepPurple,
-                ),
+                child: const Icon(Icons.person, size: 60, color: Colors.deepPurple),
               ),
               const SizedBox(height: 16),
               Text(
-                name.isNotEmpty ? name : 'Loading...',
+                name,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -170,49 +130,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                    children: [
-                      profileItem("Email", email, primary),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _phoneController,
-                              keyboardType: TextInputType.phone,
-                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                              decoration: InputDecoration(
-                                labelText: "Phone",
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              validator: (val) {
-                                if (val == null || val.isEmpty) {
-                                  return 'Phone number is required';
-                                }
-                                if (!RegExp(r'^\d+$').hasMatch(val)) {
-                                  return 'Only numbers allowed';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          ElevatedButton(
-                            onPressed: isLoading ? null : updatePhone,
-                            child: const Text("Update"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+              profileItem("Email", email, primary),
+              const SizedBox(height: 16),
+              profileItem("Coins", coins.toString(), primary),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _phoneController,
+                readOnly: phoneAlreadySet,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                decoration: InputDecoration(
+                  labelText: "Phone",
+                  filled: true,
+                  fillColor: phoneAlreadySet ? Colors.grey[200] : Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              if (!phoneAlreadySet)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: updatePhone,
+                    icon: const Icon(Icons.save, color: Colors.white),
+                    label: const Text("Update Phone", style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                const Text(
+                  "Phone number already set and cannot be updated again.",
+                  style: TextStyle(color: Colors.grey),
+                ),
               const SizedBox(height: 40),
               ElevatedButton.icon(
                 onPressed: logout,
@@ -220,10 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 label: const Text("Logout"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 36,
-                    vertical: 14,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 36),
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -240,122 +197,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget profileItem(
-    String title,
-    String value,
-    Color borderColor, {
-    bool canEditPhone = false,
-    Color? buttonColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: borderColor.withOpacity(0.2)),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: borderColor.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+  Widget profileItem(String title, String value, Color borderColor) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: borderColor.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: borderColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$title:",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: borderColor.withOpacity(0.8),
             ),
-          ],
-        ),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "$title:",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: borderColor.withOpacity(0.8),
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
             ),
-            const SizedBox(height: 4),
-            if (title == "Phone" && canEditPhone) ...[
-              TextField(
-                controller: _phoneController,
-                decoration: InputDecoration(
-                  hintText: "Enter your 10-digit phone number",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: borderColor),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: borderColor, width: 2),
-                  ),
-                  counterText: "", // hides the counter
-                ),
-                keyboardType: TextInputType.phone,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                maxLength: 10,
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_phoneController.text.length == 10) {
-                    await updatePhone();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Please enter a valid 10-digit phone number',
-                        ),
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: buttonColor ?? borderColor,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text("Save"),
-              ),
-            ] else ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(fontSize: 16, color: Colors.black87),
-                  ),
-                  // Show edit button if Google user and phone is set, and not already editing
-                  if (title == "Phone" &&
-                      FirebaseAuth.instance.currentUser?.providerData.any(
-                            (info) => info.providerId == 'google.com',
-                          ) ==
-                          true)
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.deepPurple),
-                      onPressed: () {
-                        setState(() {
-                          canEditPhone = true;
-                        });
-                      },
-                    ),
-                ],
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
